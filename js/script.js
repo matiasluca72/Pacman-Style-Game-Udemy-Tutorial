@@ -387,8 +387,6 @@ function render() {
             }
         }
 
-
-
         //Fin de la cuenta atrás y vuelta a la normalidad
         if (powerdot.pcountdown <= 0) {
             powerdot.ghostEat = false; // El fantasma ya no puede ser comido
