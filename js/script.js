@@ -4,6 +4,7 @@ let gscore = 0;
 
 //Boolean para determinar si existe al menos un fantasma
 let ghost = false;
+let ghost2 = false; // Segundo fantasma
 
 /**
  * Clase Player que contendrá atributos relacionados al render del personaje, su sprite,
@@ -35,6 +36,23 @@ let enemy = {
 }
 
 /**
+ * Adición de un segundo enemigo (no de la mejor manera, ya que esto nos hará
+ * repetir bastante código...)
+ */
+let enemy2 = {
+    x: 150,
+    y: 250,
+    ghostChar: 0,
+    animation: 0,
+    enemydir: 0,
+    speed: 5,
+    moving: 0,
+    dirx: 0,
+    diry: 0,
+    animationCountdown: 0
+}
+
+/**
  * Clase Powerdot que representará el powerup para comer a los fantasmas. 
  * El boolean powerup representa cuando será visible el powerdot
  * El pcountdown determina la cuenta atrás antes de que aparezca otro powerdot
@@ -46,6 +64,7 @@ let powerdot = {
     powerup: false,
     pcountdown: 0,
     ghostNum: 0,
+    ghostNum2: 0,
     ghostEat: false
 }
 
@@ -163,6 +182,14 @@ function render() {
         ghost = true;
     }
 
+    //Segundo fantasma
+    if (!ghost2) {
+        enemy2.ghostChar = randomNum(5) * 64;
+        enemy2.x = randomNum(450) + 100;
+        enemy2.y = randomNum(250) + 100;
+        ghost2 = true;
+    }
+
     /* En este if designamos el movimiento que tendrá el fantasma. Si llega a negativo, reinicializamos el valor
     de movimiento del fantasma siendo este un número aleatorio entre 0 y 9, multiplicado por 3 y sumado por 1 o 2
     También la velocidad en cada tramo será aleatoria entre 1 y 5. */
@@ -225,10 +252,12 @@ function render() {
     if (enemy.y > (canvas.height - 32)) { enemy.y = 0 }
     if (enemy.y < 0) { enemy.y = canvas.height - 32 }
 
-    /* Collision detection (ghost) Cálculos para determinar cuando Pac-Man colisiona con el fantasma
+    /* Collision detection (ghosts) Cálculos para determinar cuando Pac-Man colisiona con el fantasma
     y todo lo que ocurre cuando eso pasa */
-    if (player.x <= (enemy.x + 26) && enemy.x <= (player.x + 26) &&
-        player.y <= (enemy.y + 26) && enemy.y <= (player.y + 26)) {
+    if ((player.x <= (enemy.x + 26) && enemy.x <= (player.x + 26) &&
+        player.y <= (enemy.y + 26) && enemy.y <= (player.y + 26)) ||
+        (player.x <= (enemy2.x + 26) && enemy2.x <= (player.x + 26) &&
+            player.y <= (enemy2.y + 26) && enemy2.y <= (player.y + 26))) {
         console.log('ghost hit');
 
         //Determinamos si el fantasma podia ser comido en la colisión
@@ -245,11 +274,12 @@ function render() {
         //Reiniciamos posición del fantasma
         enemy.x = 300;
         enemy.y = 200;
+        enemy2.x = 350;
+        enemy2.y = 250;
 
         //Contador de tiempo del power-up baja directamente a 0
         powerdot.pcountdown = 0;
     }
-
 
     /* Collision detection (superdot) Cálculos para determinar cuando Pac-Man come el power-up,
     y todo lo que ocurre cuando eso pasa*/
@@ -259,9 +289,13 @@ function render() {
         powerdot.powerup = false; //Desaparecer powerdot
         powerdot.pcountdown = 500; //Cuenta atras hasta el próximo powerdot
         powerdot.ghostNum = enemy.ghostChar - enemy.animation; //Guardo el color del fantasma - el valor de animación para evitar que se corra el sprite
+        powerdot.ghostNum2 = enemy2.ghostChar - enemy.animation;
         enemy.ghostChar = 384; //Seteo el sprite de fantasma azul
         enemy.enemydir = 0; //Same as above
         enemy.animation = 0; //Reseteo el valor de animación para evitar bugs
+        enemy2.ghostChar = 384;
+        enemy2.enemydir = 0;
+        enemy2.animation = 0;
         powerdot.x = 0; // Saco de la pantalla el powerdot para evitar bugs
         powerdot.y = 0; // Same as above
         powerdot.ghostEat = true; //El fantasma puede ser comido
@@ -278,8 +312,10 @@ function render() {
             if (enemy.animation == 0) {
                 enemy.animation = 32;
                 enemy.enemydir += enemy.animation;
+                enemy2.enemydir += enemy.animation;
             } else {
                 enemy.enemydir -= enemy.animation;
+                enemy2.enemydir -= enemy.animation;
                 enemy.animation = 0;
             }
         }
@@ -288,6 +324,7 @@ function render() {
         if (powerdot.pcountdown <= 0) {
             powerdot.ghostEat = false; // El fantasma ya no puede ser comido
             enemy.ghostChar = powerdot.ghostNum; // Volvemos al sprite original del fantasma guardado en el powerdot
+            enemy2.ghostChar = powerdot.ghostNum2;
             player.speed = 7; // Volvemos a la velocidad original del personaje
             enemy.animation = 0; // Reseteamos animation para evitar que queden residuos que provoquen bugs en los sprites
         }
@@ -326,6 +363,7 @@ function render() {
 
     //Gráficos del jugador y los enemigos
     context.drawImage(mainImage, enemy.ghostChar, enemy.enemydir, 32, 32, enemy.x, enemy.y, 32, 32);
+    context.drawImage(mainImage, enemy2.ghostChar, enemy2.enemydir, 32, 32, enemy2.x, enemy2.y, 32, 32);
     context.drawImage(mainImage, player.pacmouth, player.pacdir, 32, 32, player.x, player.y, 32, 32);
 
     //Score zone
