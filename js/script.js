@@ -252,6 +252,67 @@ function render() {
     if (enemy.y > (canvas.height - 32)) { enemy.y = 0 }
     if (enemy.y < 0) { enemy.y = canvas.height - 32 }
 
+
+    // -------- MOVIMIENTO 2ND FANTASMA --------
+    if (enemy2.moving < 0) {
+        enemy2.moving = (randomNum(20) * 3) + (randomNum(2) + 1); //Hacerlo par o impar
+        enemy2.speed = (randomNum(5) + 1);
+
+        //Variables de dirección
+        enemy2.dirx = 0;
+        enemy2.diry = 0;
+
+        /* Si el fantasma puede ser comido, multiplicamos la velocidad por -1 para invertir la dirección del
+        fantasma y así hacer que huya del jugador. */
+        if (powerdot.ghostEat) {
+            enemy2.speed *= -1;
+        }
+
+        /* Si el número aleatorio que me tocó es par, me moveré horizontalmente intentando ir hacia
+        la dirección del jugador. Si el número random es impar, me moveré verticalmente igualmente
+        buscando al jugador.
+        Si el fantasma no está en modo 'comestible', cambiaré el valor del eje Y a renderizar del fantasma
+        para mover sus ojos en la dirección que vaya a dirigirse */
+        if (enemy2.moving % 2) {
+            if (player.x < enemy2.x) {
+                enemy2.dirx = -enemy2.speed;
+                if (!powerdot.ghostEat) {
+                    enemy2.enemydir = 64;
+                }
+            } else {
+                enemy2.dirx = enemy2.speed;
+                if (!powerdot.ghostEat) {
+                    enemy2.enemydir = 0;
+                }
+            }
+        } else {
+            if (player.y < enemy2.y) {
+                enemy2.diry = -enemy2.speed;
+                if (!powerdot.ghostEat) {
+                    enemy2.enemydir = 96;
+                }
+            } else {
+                enemy2.diry = enemy2.speed;
+                if (!powerdot.ghostEat) {
+                    enemy2.enemydir = 32;
+                }
+            }
+        }
+    }
+
+    //Incrementos o decrementos para crear acción en el enemigo
+    enemy2.x += enemy2.dirx;
+    enemy2.y += enemy2.diry;
+
+    //Decremento el tramo restante del fantasma
+    enemy2.moving--;
+
+    //Avoiding the enemy to go off canvas by teleporting it
+    if (enemy2.x > (canvas.width - 32)) { enemy2.x = 0 }
+    if (enemy2.x < 0) { enemy2.x = canvas.width - 32 }
+    if (enemy2.y > (canvas.height - 32)) { enemy2.y = 0 }
+    if (enemy2.y < 0) { enemy2.y = canvas.height - 32 }
+
     /* Collision detection (ghosts) Cálculos para determinar cuando Pac-Man colisiona con el fantasma
     y todo lo que ocurre cuando eso pasa */
     if ((player.x <= (enemy.x + 26) && enemy.x <= (player.x + 26) &&
@@ -271,7 +332,7 @@ function render() {
         player.x = 10;
         player.y = 100;
 
-        //Reiniciamos posición del fantasma
+        //Reiniciamos posición de los fantasma
         enemy.x = 300;
         enemy.y = 200;
         enemy2.x = 350;
@@ -289,7 +350,7 @@ function render() {
         powerdot.powerup = false; //Desaparecer powerdot
         powerdot.pcountdown = 500; //Cuenta atras hasta el próximo powerdot
         powerdot.ghostNum = enemy.ghostChar - enemy.animation; //Guardo el color del fantasma - el valor de animación para evitar que se corra el sprite
-        powerdot.ghostNum2 = enemy2.ghostChar - enemy.animation;
+        powerdot.ghostNum2 = enemy2.ghostChar - enemy2.animation;
         enemy.ghostChar = 384; //Seteo el sprite de fantasma azul
         enemy.enemydir = 0; //Same as above
         enemy.animation = 0; //Reseteo el valor de animación para evitar bugs
@@ -312,13 +373,21 @@ function render() {
             if (enemy.animation == 0) {
                 enemy.animation = 32;
                 enemy.enemydir += enemy.animation;
-                enemy2.enemydir += enemy.animation;
             } else {
                 enemy.enemydir -= enemy.animation;
-                enemy2.enemydir -= enemy.animation;
                 enemy.animation = 0;
             }
+            // Animación flash 2do fantasma
+            if (enemy2.animation == 0) {
+                enemy2.animation = 32;
+                enemy2.enemydir += enemy2.animation;
+            } else {
+                enemy2.enemydir -= enemy2.animation;
+                enemy2.animation = 0;
+            }
         }
+
+
 
         //Fin de la cuenta atrás y vuelta a la normalidad
         if (powerdot.pcountdown <= 0) {
@@ -327,26 +396,42 @@ function render() {
             enemy2.ghostChar = powerdot.ghostNum2;
             player.speed = 7; // Volvemos a la velocidad original del personaje
             enemy.animation = 0; // Reseteamos animation para evitar que queden residuos que provoquen bugs en los sprites
+            enemy2.animation = 0;
         }
     } else {
 
-        /* Animaciones del fantasma en su estado normal. Se utiliza un contador de animación que va
-        de 0 a 20. */
+        // Animaciones del fantasma en su estado normal. Se utiliza un contador de animación que va de 0 a 20.
         if (enemy.animationCountdown > 0) {
             enemy.animationCountdown--;
         } else {
             enemy.animationCountdown = 20;
         }
 
+        //2do fantasma
+        if (enemy2.animationCountdown > 0) {
+            enemy2.animationCountdown--;
+        } else {
+            enemy2.animationCountdown = 20;
+        }
+
         /* Si el contador está en 0 o en 10 (límites opuestos de tiempo) se genera el cambio de animación
         moviendo el eje X de la porción de imagen a renderizar (se mueve a su sprite a la derecha y vuelve
-        a la izquierda) */
+            a la izquierda) */
         if (enemy.animationCountdown == 0) {
             enemy.animation = 32;
             enemy.ghostChar += enemy.animation;
         } else if (enemy.animationCountdown == 10) {
             enemy.ghostChar -= enemy.animation;
             enemy.animation = 0;
+        }
+
+        //2do fantasma
+        if (enemy2.animationCountdown == 0) {
+            enemy2.animation = 32;
+            enemy2.ghostChar += enemy2.animation;
+        } else if (enemy2.animationCountdown == 10) {
+            enemy2.ghostChar -= enemy2.animation;
+            enemy2.animation = 0;
         }
     }
 
